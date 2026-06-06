@@ -108,99 +108,118 @@ Formato requerido:
 TEXTO DEL DOCUMENTO:
 """
 
-# Tabla de precios fijos CLP 2025 — Santa Cruz, VI Región (incluye flete +12%)
-# Claude SOLO estima cantidades. Los precios vienen de esta tabla, no del modelo.
+# ── TABLA DE PRECIOS FIJOS ────────────────────────────────────────────────────
+# Precios CLP 2025, trabajo completo (material + mano de obra + herramientas).
+# Zona Santa Cruz, VI Región — incluye ~12% flete sobre materiales.
+# Fuentes: ONDAC Manual de Precios Chile, MINVU DS27 2025, mercado local.
+# Claude SOLO aporta cantidades. Los precios vienen exclusivamente de esta tabla.
+#
+# IMPORTANTE: las claves deben coincidir EXACTAMENTE con lo que Claude devuelve
+# en el campo "precio_clave". No hay matching parcial ni fallback.
+#
+# Estructura: "clave": ("unidad", precio_clp)
 PRECIOS_FIJOS = {
-    # Obras preliminares
-    "instalación de faenas":        ("global",  2_800_000),
-    "trazado y nivelación":         ("m2",      4_500),
-    "excavación":                   ("m3",      22_000),
-    "retiro de escombros":          ("m3",      18_000),
-    "relleno compactado":           ("m3",      28_000),
-    # Fundaciones
-    "hormigón h-10 solado":         ("m3",      95_000),
-    "hormigón fundaciones h-25":    ("m3",      310_000),
-    "zapatas hormigón armado":      ("m3",      350_000),
-    "radier hormigón":              ("m2",      32_000),
-    "enfierradura fundaciones":     ("kg",      1_100),
-    # Estructura
-    "pilares hormigón armado":      ("m3",      580_000),
-    "vigas hormigón armado":        ("m3",      560_000),
-    "losa nervada aligerada":       ("m2",      165_000),
-    "losa maciza hormigón":         ("m2",      145_000),
-    "escalera hormigón armado":     ("global",  3_200_000),
-    "estructura metálica":          ("kg",      2_500),
-    # Albañilería
-    "muro bloque hormigón":         ("m2",      62_000),
-    "tabique volcanita":            ("m2",      42_000),
-    "estuco exterior":              ("m2",      19_000),
-    "estuco interior":              ("m2",      16_000),
-    # Cubierta
-    "impermeabilización losa":      ("m2",      28_000),
-    "formación pendientes":         ("m2",      15_000),
-    "cubierta panel sandwich":      ("m2",      42_000),
-    "cubierta teja":                ("m2",      32_000),
-    "canalón zinc":                 ("ml",      8_500),
-    "bajante pvc 110mm":            ("ml",      16_000),
-    # Instalaciones sanitarias
-    "agua potable punto":           ("punto",   165_000),
-    "alcantarillado punto":         ("punto",   130_000),
-    "artefacto sanitario":          ("un",      850_000),
-    "calefont gas":                 ("un",      680_000),
-    # Instalaciones eléctricas
-    "punto eléctrico":              ("punto",   82_000),
-    "tablero eléctrico":            ("un",      520_000),
-    "acometida eléctrica":          ("global",  1_100_000),
-    "red datos y tv":               ("punto",   48_000),
-    # Terminaciones
-    "porcelanato piso":             ("m2",      62_000),
-    "piso laminado":                ("m2",      38_000),
-    "cerámica muro baño":           ("m2",      52_000),
-    "pintura interior":             ("m2",      8_000),
-    "pintura exterior":             ("m2",      10_500),
-    "cielo falso yeso":             ("m2",      32_000),
-    # Carpintería
-    "puerta interior madera":       ("un",      280_000),
-    "puerta exterior":              ("un",      820_000),
-    "ventana aluminio":             ("m2",      145_000),
-    "mueble cocina":                ("ml",      420_000),
-    # Obras exteriores
-    "pavimento hormigón exterior":  ("m2",      38_000),
-    "cierre perimetral":            ("ml",      92_000),
-    "jardín y paisajismo":          ("m2",      18_000),
-    "aseo final de obra":           ("global",  1_100_000),
+    # ── Obras preliminares ────────────────────────────────────────────────────
+    "instalacion faenas":           ("global",  1_500_000),  # bodega, baño, cerco
+    "trazado nivelacion":           ("m2",      3_500),
+    "excavacion":                   ("m3",      18_000),     # excavación manual+máquina
+    "retiro escombros":             ("m3",      14_000),     # retiro y transporte
+    "relleno compactado":           ("m3",      22_000),
+
+    # ── Fundaciones ──────────────────────────────────────────────────────────
+    "solado hormigon":              ("m3",      85_000),     # H-10 hormigón magro
+    "cimiento corrido":             ("m3",      240_000),    # HA H-25 inc. moldaje+fierro
+    "zapata aislada":               ("m3",      270_000),    # HA H-25 inc. moldaje+fierro
+    "radier":                       ("m2",      28_000),     # H-20 e=10cm inc. membrana
+    "enfierradura":                 ("kg",      1_000),      # fierro corrugado puesto
+
+    # ── Estructura ───────────────────────────────────────────────────────────
+    "pilar hormigon armado":        ("m3",      480_000),    # inc. moldaje metálico+fierro
+    "viga hormigon armado":         ("m3",      460_000),    # inc. moldaje+fierro
+    "losa nervada":                 ("m2",      120_000),    # alivianada h=20cm inc. EPS
+    "losa maciza":                  ("m2",      95_000),     # e=12cm inc. moldaje+fierro
+    "escalera hormigon":            ("global",  2_500_000),  # inc. moldaje, fierro, barandas
+    "estructura metalica":          ("kg",      2_200),
+
+    # ── Albañilería ──────────────────────────────────────────────────────────
+    "muro bloque":                  ("m2",      52_000),     # bloque 15cm inc. mortero+MO
+    "tabique":                      ("m2",      35_000),     # Volcanita doble inc. estructura
+    "estuco":                       ("m2",      14_000),     # mortero+yeso, ambas caras
+    "pintura muro":                 ("m2",      7_500),      # 2 manos látex + sellador
+
+    # ── Cubierta ─────────────────────────────────────────────────────────────
+    "impermeabilizacion":           ("m2",      22_000),     # membrana asfáltica bicapa
+    "pendiente hormigon liviano":   ("m2",      12_000),
+    "cubierta sandwich":            ("m2",      38_000),     # panel 60mm inc. correas
+    "cubierta teja":                ("m2",      28_000),
+    "canalon":                      ("ml",      7_000),
+    "bajante aguas lluvias":        ("ml",      12_000),     # PVC 110mm inc. receptores
+
+    # ── Instalaciones sanitarias ─────────────────────────────────────────────
+    "punto agua potable":           ("punto",   130_000),    # inc. tubería, llaves, fittings
+    "punto alcantarillado":         ("punto",   100_000),    # inc. tubería PVC, cámara
+    "artefacto sanitario":          ("un",      320_000),    # WC, lavamanos o ducha c/u
+    "calefon":                      ("un",      550_000),    # calefón + conexión gas
+
+    # ── Instalaciones eléctricas ─────────────────────────────────────────────
+    "punto electrico":              ("punto",   65_000),     # inc. conductor, tubería, salida
+    "tablero electrico":            ("un",      420_000),    # inc. termomagnéticas+diferencial
+    "acometida electrica":          ("global",  850_000),    # empalme NSEG/SEC
+    "punto datos tv":               ("punto",   38_000),
+
+    # ── Terminaciones ────────────────────────────────────────────────────────
+    "porcelanato":                  ("m2",      50_000),     # 60x60 inc. adhesivo+fragüe
+    "piso laminado":                ("m2",      30_000),     # AC4 8mm inc. fieltro
+    "ceramica bano":                ("m2",      42_000),     # muro baño inc. adhesivo
+    "cielo yeso":                   ("m2",      26_000),     # metal desplegado+estuco
+    "pintura exterior":             ("m2",      9_000),      # impermeabilizante pintante
+
+    # ── Carpintería ──────────────────────────────────────────────────────────
+    "puerta interior":              ("un",      250_000),    # entamborada inc. marco+cerradura
+    "puerta exterior":              ("un",      650_000),    # maciza/metálica inc. marco
+    "ventana aluminio":             ("m2",      120_000),    # corredera vidrio 6mm inc. reja
+    "mueble cocina":                ("ml",      380_000),    # alto+bajo MDF inc. cubierta
+
+    # ── Obras exteriores ─────────────────────────────────────────────────────
+    "pavimento exterior":           ("m2",      32_000),     # hormigón H-20 e=8cm
+    "cierre perimetral":            ("ml",      75_000),     # muro bloque + reja h=1.8m
+    "jardin":                       ("m2",      15_000),     # pasto + tierra vegetal
+    "aseo obra":                    ("global",  900_000),    # limpieza final + retiro
 }
 
 PROMPT_PARTIDAS = """Eres un estimador de costos de construcción para proyectos en Chile.
 
-Con base en el análisis técnico, genera un presupuesto por partidas SOLO con cantidades.
-NO inventes precios — el sistema los asignará desde una tabla fija.
+Con base en el análisis técnico, genera un presupuesto por partidas. SOLO aportas cantidades.
+Los precios los asigna el sistema desde una tabla fija — NO los inventes.
 
-Incluye máximo 8-10 partidas principales, con 3-6 ítems cada una (máximo 50 ítems total).
+Incluye máximo 8-10 partidas, con 3-6 ítems cada una (máximo 50 ítems total).
 
-Para cada ítem:
-- partida: categoría (Obras Preliminares, Fundaciones, Estructura, Albañilería, Cubierta, Instalaciones, Terminaciones, Carpintería, Obras Exteriores)
-- item: descripción concisa del trabajo
-- precio_clave: la clave MÁS cercana de esta lista de precios disponibles:
-  instalación de faenas, trazado y nivelación, excavación, retiro de escombros, relleno compactado,
-  hormigón h-10 solado, hormigón fundaciones h-25, zapatas hormigón armado, radier hormigón, enfierradura fundaciones,
-  pilares hormigón armado, vigas hormigón armado, losa nervada aligerada, losa maciza hormigón, escalera hormigón armado, estructura metálica,
-  muro bloque hormigón, tabique volcanita, estuco exterior, estuco interior,
-  impermeabilización losa, formación pendientes, cubierta panel sandwich, cubierta teja, canalón zinc, bajante pvc 110mm,
-  agua potable punto, alcantarillado punto, artefacto sanitario, calefont gas,
-  punto eléctrico, tablero eléctrico, acometida eléctrica, red datos y tv,
-  porcelanato piso, piso laminado, cerámica muro baño, pintura interior, pintura exterior, cielo falso yeso,
-  puerta interior madera, puerta exterior, ventana aluminio, mueble cocina,
-  pavimento hormigón exterior, cierre perimetral, jardín y paisajismo, aseo final de obra
-- cantidad: número (usa datos del documento; si estimas, marca supuesto: true)
+Para cada ítem debes elegir la "precio_clave" EXACTA de esta lista (copia la clave textualmente):
+
+CLAVES DISPONIBLES (cópialas exactas, sin modificar):
+instalacion faenas | trazado nivelacion | excavacion | retiro escombros | relleno compactado
+solado hormigon | cimiento corrido | zapata aislada | radier | enfierradura
+pilar hormigon armado | viga hormigon armado | losa nervada | losa maciza | escalera hormigon | estructura metalica
+muro bloque | tabique | estuco | pintura muro
+impermeabilizacion | pendiente hormigon liviano | cubierta sandwich | cubierta teja | canalon | bajante aguas lluvias
+punto agua potable | punto alcantarillado | artefacto sanitario | calefon
+punto electrico | tablero electrico | acometida electrica | punto datos tv
+porcelanato | piso laminado | ceramica bano | cielo yeso | pintura exterior
+puerta interior | puerta exterior | ventana aluminio | mueble cocina
+pavimento exterior | cierre perimetral | jardin | aseo obra
+
+Campos por ítem:
+- partida: Obras Preliminares | Fundaciones | Estructura | Albañilería | Cubierta | Instalaciones Sanitarias | Instalaciones Eléctricas | Terminaciones | Carpintería | Obras Exteriores
+- item: descripción breve del trabajo
+- precio_clave: UNA clave exacta de la lista anterior
+- cantidad: número (si estimas, supuesto: true)
 - supuesto: true/false
-- nota: máximo 8 palabras si necesario
 
 Devuelve ÚNICAMENTE JSON:
 {
   "resumen_proyecto": {"nombre": "...", "tipo": "...", "superficie_m2": número, "descripcion": "..."},
   "partidas": [
-    {"partida": "...", "item": "...", "precio_clave": "...", "cantidad": número, "supuesto": false, "nota": "..."}
+    {"partida": "...", "item": "...", "precio_clave": "...", "cantidad": número, "supuesto": false}
   ]
 }
 
@@ -286,68 +305,58 @@ def generar_presupuesto(texto: str, nombre_proyecto: str, api_key: str):
 
 
 def calcular_totales(presupuesto: dict) -> pd.DataFrame:
-    """Calcula totales usando la tabla de precios fijos — Claude solo aporta cantidades."""
+    """Calcula totales con precios fijos — Claude aporta cantidades y precio_clave exacta."""
     filas = []
     for p in presupuesto.get("partidas", []):
         cantidad = float(p.get("cantidad", 0) or 0)
-        clave = (p.get("precio_clave") or "").lower().strip()
+        clave = (p.get("precio_clave") or "").strip()
 
-        # Buscar precio en tabla fija
+        # Lookup exacto — sin fallback para evitar asignaciones incorrectas
         if clave in PRECIOS_FIJOS:
             unidad, pu = PRECIOS_FIJOS[clave]
         else:
-            # Fallback: buscar por coincidencia parcial
+            # Clave no reconocida: precio 0, marcado para revisión
+            unidad = "?"
             pu = 0
-            unidad = p.get("unidad", "")
-            for k, (u, v) in PRECIOS_FIJOS.items():
-                if any(word in clave for word in k.split() if len(word) > 4):
-                    pu, unidad = v, u
-                    break
 
         filas.append({
             "Partida": p.get("partida", ""),
             "Ítem": p.get("item", ""),
+            "Clave": clave,
             "Unidad": unidad,
             "Cantidad": cantidad,
             "P.U. (CLP)": pu,
             "Total (CLP)": cantidad * pu,
-            "Supuesto": "(*)" if p.get("supuesto") else "",
-            "Nota": p.get("nota", ""),
+            "Supuesto": "(*)" if p.get("supuesto") or pu == 0 else "",
+            "Nota": "" if pu > 0 else "SIN PRECIO — revisar clave",
         })
     df = pd.DataFrame(filas)
-    subtotal = df["Total (CLP)"].sum()
-    extras = pd.DataFrame([
-        {"Partida": "Gastos Generales", "Ítem": "Gastos generales (10%)", "Unidad": "global",
-         "Cantidad": 1, "P.U. (CLP)": subtotal * 0.10, "Total (CLP)": subtotal * 0.10, "Supuesto": "", "Nota": ""},
-        {"Partida": "Gastos Generales", "Ítem": "Utilidad empresa (8%)", "Unidad": "global",
-         "Cantidad": 1, "P.U. (CLP)": subtotal * 0.08, "Total (CLP)": subtotal * 0.08, "Supuesto": "", "Nota": ""},
-        {"Partida": "Gastos Generales", "Ítem": "Imprevistos (5%)", "Unidad": "global",
-         "Cantidad": 1, "P.U. (CLP)": subtotal * 0.05, "Total (CLP)": subtotal * 0.05, "Supuesto": "", "Nota": ""},
-    ])
-    return pd.concat([df, extras], ignore_index=True)
+    return df
 
 
-def build_excel(df: pd.DataFrame, resumen: dict, nombre_proyecto: str) -> bytes:
+def build_excel(df: pd.DataFrame, resumen: dict, nombre_proyecto: str, uf_valor: int = 38_500) -> bytes:
     wb = openpyxl.Workbook()
+
+    # ── Hoja 1: Presupuesto ───────────────────────────────────────────────────
     ws = wb.active
     ws.title = "Presupuesto"
-    anchos = {"A": 22, "B": 45, "C": 10, "D": 12, "E": 16, "F": 18, "G": 5, "H": 35}
-    for col, w in anchos.items():
-        ws.column_dimensions[col].width = w
 
-    fondo_azul    = PatternFill("solid", fgColor="1F4E79")
-    fondo_azul2   = PatternFill("solid", fgColor="2E75B6")
-    fondo_sub     = PatternFill("solid", fgColor="D6E4F0")
-    fondo_amarillo = PatternFill("solid", fgColor="FFF2CC")
+    az1 = PatternFill("solid", fgColor="1F4E79")
+    az2 = PatternFill("solid", fgColor="2E75B6")
+    sub = PatternFill("solid", fgColor="D6E4F0")
+    ama = PatternFill("solid", fgColor="FFF2CC")
+    ver = PatternFill("solid", fgColor="E2EFDA")
     borde = Border(left=Side(style="thin"), right=Side(style="thin"),
                    top=Side(style="thin"), bottom=Side(style="thin"))
+
+    for col, w in {"A":4,"B":46,"C":9,"D":11,"E":17,"F":18,"G":5,"H":32}.items():
+        ws.column_dimensions[col].width = w
 
     # Título
     ws.merge_cells("A1:H1")
     ws["A1"] = f"PRESUPUESTO DE OBRA — {nombre_proyecto.upper()}"
     ws["A1"].font = Font(name="Calibri", size=14, bold=True, color="FFFFFF")
-    ws["A1"].fill = fondo_azul
-    ws["A1"].alignment = Alignment(horizontal="center", vertical="center")
+    ws["A1"].fill = az1; ws["A1"].alignment = Alignment(horizontal="center", vertical="center")
     ws.row_dimensions[1].height = 28
 
     ws.merge_cells("A2:H2")
@@ -355,99 +364,275 @@ def build_excel(df: pd.DataFrame, resumen: dict, nombre_proyecto: str) -> bytes:
                 f"Superficie: {resumen.get('superficie_m2','N/D')} m²   |   "
                 f"Fecha: {date.today().strftime('%d/%m/%Y')}")
     ws["A2"].font = Font(name="Calibri", size=9, italic=True, color="FFFFFF")
-    ws["A2"].fill = fondo_azul2
-    ws["A2"].alignment = Alignment(horizontal="center", vertical="center")
-    ws.row_dimensions[3].height = 6
+    ws["A2"].fill = az2; ws["A2"].alignment = Alignment(horizontal="center", vertical="center")
+    ws.row_dimensions[3].height = 5
 
-    # Headers
-    headers = ["Partida", "Ítem / Descripción", "Unidad", "Cantidad", "P.U. (CLP)", "Total (CLP)", "(*)", "Notas"]
-    row = 4
-    for col, h in enumerate(headers, 1):
-        c = ws.cell(row=row, column=col, value=h)
-        c.font = Font(name="Calibri", size=10, bold=True, color="FFFFFF")
-        c.fill = fondo_azul
-        c.alignment = Alignment(horizontal="center", vertical="center")
-        c.border = borde
-    ws.row_dimensions[row].height = 22
+    # Headers — col A=N°, B=Descripción, C=Unid, D=Cantidad, E=P.U.(CLP), F=Total, G=(*), H=Nota
+    for col, h in enumerate(["N°","Ítem / Descripción","Unid.","Cantidad","P.U. (CLP)","Total (CLP)","(*)","Notas"], 1):
+        c = ws.cell(row=4, column=col, value=h)
+        c.font = Font(name="Calibri", size=9, bold=True, color="FFFFFF")
+        c.fill = az1; c.alignment = Alignment(horizontal="center", vertical="center"); c.border = borde
+    ws.row_dimensions[4].height = 20
 
+    # Build items with formulas
     row = 5
+    subtotal_refs = []   # (partida_name, first_row, last_row) for each group
+    item_rows = []       # track all item rows for grand total SUM
     partidas_order = list(dict.fromkeys(df["Partida"].tolist()))
+
     for partida in partidas_order:
         grupo = df[df["Partida"] == partida]
+
+        # Partida header row
         ws.merge_cells(f"A{row}:H{row}")
         ws[f"A{row}"] = partida.upper()
-        ws[f"A{row}"].font = Font(name="Calibri", size=10, bold=True, color="FFFFFF")
-        ws[f"A{row}"].fill = fondo_azul2
+        ws[f"A{row}"].font = Font(name="Calibri", size=9, bold=True, color="FFFFFF")
+        ws[f"A{row}"].fill = az2
         ws[f"A{row}"].alignment = Alignment(horizontal="left", vertical="center", indent=1)
-        ws.row_dimensions[row].height = 18
-        row += 1
-        subtotal = 0
-        for _, item in grupo.iterrows():
-            es_sup = item["Supuesto"] == "(*)"
-            for col, val in enumerate([
-                "", item["Ítem"], item["Unidad"], item["Cantidad"],
-                item["P.U. (CLP)"], item["Total (CLP)"], item["Supuesto"], item["Nota"]
-            ], 1):
-                c = ws.cell(row=row, column=col, value=val)
-                c.font = Font(name="Calibri", size=9)
-                c.border = borde
-                if es_sup:
-                    c.fill = fondo_amarillo
-                if col == 4:
-                    c.number_format = '#,##0.00'; c.alignment = Alignment(horizontal="right")
-                if col in (5, 6):
-                    c.number_format = '#,##0'; c.alignment = Alignment(horizontal="right")
-                if col == 2:
-                    c.alignment = Alignment(wrap_text=True, indent=1)
-            subtotal += float(item["Total (CLP)"])
-            ws.row_dimensions[row].height = 15
-            row += 1
-        # Subtotal
-        for col in range(1, 9):
-            c = ws.cell(row=row, column=col)
-            c.fill = fondo_sub; c.border = borde
-        ws.cell(row=row, column=2, value=f"SUBTOTAL {partida.upper()}").font = Font(name="Calibri", size=9, bold=True)
-        ws.cell(row=row, column=2).fill = fondo_sub; ws.cell(row=row, column=2).border = borde
-        c_s = ws.cell(row=row, column=6, value=subtotal)
-        c_s.font = Font(name="Calibri", size=9, bold=True)
-        c_s.number_format = '#,##0'; c_s.alignment = Alignment(horizontal="right")
-        c_s.fill = fondo_sub; c_s.border = borde
         ws.row_dimensions[row].height = 16
         row += 1
 
-    # Total general
-    total = df["Total (CLP)"].sum()
-    uf = total / 38_500
-    row += 1
+        first_item_row = row
+        item_num = 1
+        for _, item in grupo.iterrows():
+            es_sup = item["Supuesto"] == "(*)"
+            fill = ama if es_sup else None
+            pu_val = float(item["P.U. (CLP)"])
+
+            vals = [item_num, item["Ítem"], item["Unidad"], item["Cantidad"], pu_val, None, item["Supuesto"], item["Nota"]]
+            for ci, val in enumerate(vals, 1):
+                c = ws.cell(row=row, column=ci, value=val)
+                c.font = Font(name="Calibri", size=9)
+                c.border = borde
+                if fill: c.fill = fill
+                if ci == 1:
+                    c.alignment = Alignment(horizontal="center")
+                if ci == 2:
+                    c.alignment = Alignment(wrap_text=True, indent=1)
+                if ci == 4:
+                    c.number_format = '#,##0.00'; c.alignment = Alignment(horizontal="right")
+                if ci == 5:
+                    c.number_format = '#,##0'; c.alignment = Alignment(horizontal="right")
+                if ci == 6:
+                    # FORMULA: Total = Cantidad × P.U.
+                    c.value = f"=D{row}*E{row}"
+                    c.number_format = '#,##0'; c.alignment = Alignment(horizontal="right")
+                    if fill: c.fill = fill
+            ws.row_dimensions[row].height = 15
+            item_rows.append(row)
+            item_num += 1
+            row += 1
+
+        last_item_row = row - 1
+
+        # Subtotal row (formula)
+        for ci in range(1, 9):
+            c = ws.cell(row=row, column=ci); c.fill = sub; c.border = borde
+        ws.cell(row=row, column=2, value=f"SUBTOTAL {partida.upper()}").font = Font(name="Calibri", size=9, bold=True)
+        ws.cell(row=row, column=2).fill = sub; ws.cell(row=row, column=2).border = borde
+        c_sub = ws.cell(row=row, column=6, value=f"=SUM(F{first_item_row}:F{last_item_row})")
+        c_sub.font = Font(name="Calibri", size=9, bold=True)
+        c_sub.number_format = '#,##0'; c_sub.alignment = Alignment(horizontal="right")
+        c_sub.fill = sub; c_sub.border = borde
+        subtotal_refs.append((partida, row))
+        ws.row_dimensions[row].height = 16
+        row += 1
+
+    # ── Gastos generales block ────────────────────────────────────────────────
+    # Subtotal neto = SUM of all subtotal cells
+    subtotal_cells = "+".join([f"F{r}" for _, r in subtotal_refs])
+    row_sub_neto = row
     ws.merge_cells(f"A{row}:E{row}")
-    ws[f"A{row}"] = "TOTAL GENERAL (con GG, utilidad e imprevistos)"
-    ws[f"A{row}"].font = Font(name="Calibri", size=11, bold=True, color="FFFFFF")
-    ws[f"A{row}"].fill = fondo_azul
-    ws[f"A{row}"].alignment = Alignment(horizontal="right", vertical="center")
-    ws[f"A{row}"].border = borde
-    c_t = ws.cell(row=row, column=6, value=total)
-    c_t.font = Font(name="Calibri", size=11, bold=True, color="FFFFFF")
-    c_t.fill = fondo_azul; c_t.number_format = '#,##0'; c_t.alignment = Alignment(horizontal="right"); c_t.border = borde
-    for col in [7, 8]:
-        ws.cell(row=row, column=col).fill = fondo_azul; ws.cell(row=row, column=col).border = borde
-    ws.row_dimensions[row].height = 22
-    row += 1
-    ws.merge_cells(f"A{row}:E{row}")
-    ws[f"A{row}"] = "Equivalente en UF (1 UF = $38.500)"
-    ws[f"A{row}"].alignment = Alignment(horizontal="right")
-    ws[f"A{row}"].font = Font(name="Calibri", size=9, italic=True)
-    c_uf = ws.cell(row=row, column=6, value=round(uf, 1))
-    c_uf.font = Font(name="Calibri", size=9, bold=True); c_uf.number_format = '#,##0.0" UF"'; c_uf.alignment = Alignment(horizontal="right")
+    ws[f"A{row}"] = "SUBTOTAL NETO (sin GG)"
+    ws[f"A{row}"].font = Font(name="Calibri", size=9, bold=True)
+    ws[f"A{row}"].alignment = Alignment(horizontal="right"); ws[f"A{row}"].fill = sub
+    for ci in range(1,9): ws.cell(row=row,column=ci).fill=sub; ws.cell(row=row,column=ci).border=borde
+    c_neto = ws.cell(row=row, column=6, value=f"={subtotal_cells}")
+    c_neto.number_format = '#,##0'; c_neto.alignment = Alignment(horizontal="right")
+    c_neto.font = Font(name="Calibri", size=9, bold=True); c_neto.fill = sub; c_neto.border = borde
     row += 2
+
+    # GG rows referencing the neto subtotal
+    gg_items = [
+        ("Gastos generales", 0.10),
+        ("Utilidad empresa", 0.08),
+        ("Imprevistos", 0.05),
+    ]
+    gg_rows = []
+    for label, pct in gg_items:
+        ws.merge_cells(f"A{row}:D{row}")
+        ws[f"A{row}"] = f"{label} ({int(pct*100)}%)"
+        ws[f"A{row}"].font = Font(name="Calibri", size=9); ws[f"A{row}"].fill = ver
+        ws[f"A{row}"].alignment = Alignment(horizontal="right")
+        for ci in range(1,9): ws.cell(row=row,column=ci).fill=ver; ws.cell(row=row,column=ci).border=borde
+        c_gg = ws.cell(row=row, column=6, value=f"=F{row_sub_neto}*{pct}")
+        c_gg.number_format = '#,##0'; c_gg.alignment = Alignment(horizontal="right")
+        c_gg.font = Font(name="Calibri", size=9); c_gg.fill = ver; c_gg.border = borde
+        gg_rows.append(row)
+        ws.row_dimensions[row].height = 15
+        row += 1
+
+    # ── TOTAL GENERAL ────────────────────────────────────────────────────────
+    row += 1
+    total_formula = f"=F{row_sub_neto}+" + "+".join([f"F{r}" for r in gg_rows])
+    row_total = row
+    ws.merge_cells(f"A{row}:E{row}")
+    ws[f"A{row}"] = "TOTAL GENERAL (incl. GG, utilidad e imprevistos)"
+    ws[f"A{row}"].font = Font(name="Calibri", size=11, bold=True, color="FFFFFF")
+    ws[f"A{row}"].fill = az1; ws[f"A{row}"].alignment = Alignment(horizontal="right", vertical="center")
+    ws[f"A{row}"].border = borde
+    for ci in [6,7,8]: ws.cell(row=row,column=ci).fill=az1; ws.cell(row=row,column=ci).border=borde
+    c_tot = ws.cell(row=row, column=6, value=total_formula)
+    c_tot.font = Font(name="Calibri", size=11, bold=True, color="FFFFFF")
+    c_tot.fill = az1; c_tot.number_format = '#,##0'; c_tot.alignment = Alignment(horizontal="right"); c_tot.border = borde
+    ws.row_dimensions[row].height = 24
+    row += 1
+
+    # UF equivalent
+    ws.merge_cells(f"A{row}:E{row}")
+    ws[f"A{row}"] = f"Equivalente en UF  (1 UF = ${uf_valor:,})"
+    ws[f"A{row}"].font = Font(name="Calibri", size=9, italic=True)
+    ws[f"A{row}"].alignment = Alignment(horizontal="right")
+    c_uf = ws.cell(row=row, column=6, value=f"=F{row_total}/{uf_valor}")
+    c_uf.number_format = '#,##0.0" UF"'; c_uf.alignment = Alignment(horizontal="right")
+    c_uf.font = Font(name="Calibri", size=9, bold=True)
+    row += 2
+
+    # Notas finales
     ws.merge_cells(f"A{row}:H{row}")
-    ws[f"A{row}"] = "(*) Ítems en amarillo: cantidades estimadas. Validar con planos definitivos y cubicaciones."
+    ws[f"A{row}"] = "(*) Ítems en amarillo = cantidades estimadas. Ajusta la columna Cantidad según planos y cubicaciones definitivas — los totales se recalculan automáticamente."
     ws[f"A{row}"].font = Font(name="Calibri", size=8, italic=True, color="666666")
     ws[f"A{row}"].fill = PatternFill("solid", fgColor="FFFFD0")
     row += 1
     ws.merge_cells(f"A{row}:H{row}")
-    ws[f"A{row}"] = "PRESUPUESTO REFERENCIAL — No incluye IVA. Sujeto a cubicaciones y cotizaciones definitivas."
+    ws[f"A{row}"] = "PRESUPUESTO REFERENCIAL — No incluye IVA. Precios de referencia en tab 'Tabla de Precios'. Sujeto a cubicaciones y cotizaciones definitivas."
     ws[f"A{row}"].font = Font(name="Calibri", size=8, italic=True, color="CC0000")
-    ws.freeze_panes = "A5"
+
+    ws.freeze_panes = "B5"
+
+    # ── Hoja 2: Tabla de Precios ──────────────────────────────────────────────
+    wp = wb.create_sheet("Tabla de Precios")
+    for col, w in {"A":30,"B":10,"C":18,"D":45}.items():
+        wp.column_dimensions[col].width = w
+
+    wp.merge_cells("A1:D1")
+    wp["A1"] = "TABLA DE PRECIOS UNITARIOS — REFERENCIA"
+    wp["A1"].font = Font(name="Calibri", size=12, bold=True, color="FFFFFF")
+    wp["A1"].fill = az1; wp["A1"].alignment = Alignment(horizontal="center", vertical="center")
+    wp.row_dimensions[1].height = 22
+
+    wp.merge_cells("A2:D2")
+    wp["A2"] = f"Precios CLP 2025 · Zona Santa Cruz, VI Región (incl. ~12% flete) · Trabajo completo: material + mano de obra · Fecha: {date.today().strftime('%d/%m/%Y')}"
+    wp["A2"].font = Font(name="Calibri", size=8, italic=True, color="FFFFFF")
+    wp["A2"].fill = az2; wp["A2"].alignment = Alignment(horizontal="center")
+
+    for ci, h in enumerate(["Ítem / Descripción", "Unidad", "Precio Unit. (CLP)", "Notas / Alcance"], 1):
+        c = wp.cell(row=3, column=ci, value=h)
+        c.font = Font(name="Calibri", size=9, bold=True, color="FFFFFF")
+        c.fill = az1; c.alignment = Alignment(horizontal="center"); c.border = borde
+    wp.row_dimensions[3].height = 18
+
+    # Categorías y descripciones para la tabla de precios
+    categorias = {
+        "OBRAS PRELIMINARES": [
+            ("instalacion faenas",      "Instalación de faenas (bodega, baño, cerco)"),
+            ("trazado nivelacion",      "Trazado y nivelación de terreno"),
+            ("excavacion",              "Excavación en terreno (manual + máquina)"),
+            ("retiro escombros",        "Retiro y transporte de material sobrante"),
+            ("relleno compactado",      "Relleno compactado con material seleccionado"),
+        ],
+        "FUNDACIONES": [
+            ("solado hormigon",         "Hormigón de limpieza H-10 (solado bajo cimientos)"),
+            ("cimiento corrido",        "Cimiento corrido HA H-25 (inc. moldaje + fierro)"),
+            ("zapata aislada",          "Zapata aislada HA H-25 (inc. moldaje + fierro)"),
+            ("radier",                  "Radier HA H-20 e=10cm (inc. membrana)"),
+            ("enfierradura",            "Enfierradura/acero corrugado puesto en obra"),
+        ],
+        "ESTRUCTURA": [
+            ("pilar hormigon armado",   "Pilar HA H-25 (inc. moldaje metálico + fierro)"),
+            ("viga hormigon armado",    "Viga/dala HA H-25 (inc. moldaje + fierro)"),
+            ("losa nervada",            "Losa nervada aligerada h=20cm (inc. EPS + compresión)"),
+            ("losa maciza",             "Losa maciza e=12cm (inc. moldaje + fierro)"),
+            ("escalera hormigon",       "Escalera HA (inc. moldaje, fierro, baranda)"),
+            ("estructura metalica",     "Estructura metálica (perfiles acero puesto)"),
+        ],
+        "ALBAÑILERÍA": [
+            ("muro bloque",             "Muro bloque hormigón 15cm (inc. mortero + MO)"),
+            ("tabique",                 "Tabique Volcanita/yeso-cartón (inc. estructura)"),
+            ("estuco",                  "Estuco mortero cemento-arena 1:4 (ambas caras)"),
+            ("pintura muro",            "Pintura interior 2 manos látex + sellador"),
+        ],
+        "CUBIERTA": [
+            ("impermeabilizacion",      "Impermeabilización membrana asfáltica bicapa"),
+            ("pendiente hormigon liviano", "Formación de pendientes con hormigón liviano"),
+            ("cubierta sandwich",       "Cubierta panel sandwich 60mm (inc. correas)"),
+            ("cubierta teja",           "Cubierta teja (inc. estructura + membrana)"),
+            ("canalon",                 "Canalón zinc/PVC (inc. soportes)"),
+            ("bajante aguas lluvias",   "Bajante aguas lluvias PVC 110mm (inc. receptores)"),
+        ],
+        "INSTALACIONES SANITARIAS": [
+            ("punto agua potable",      "Punto agua potable (inc. tubería + llaves + fittings)"),
+            ("punto alcantarillado",    "Punto alcantarillado (inc. tubería PVC + cámara)"),
+            ("artefacto sanitario",     "Artefacto sanitario c/u (WC, lavamanos o ducha)"),
+            ("calefon",                 "Calefón a gas + conexión (inc. tubería + accesorios)"),
+        ],
+        "INSTALACIONES ELÉCTRICAS": [
+            ("punto electrico",         "Punto eléctrico (inc. conductor, tubería, salida)"),
+            ("tablero electrico",       "Tablero eléctrico (inc. termomagnéticas + diferencial)"),
+            ("acometida electrica",     "Acometida + empalme NSEG/SEC"),
+            ("punto datos tv",          "Punto red datos / TV cable"),
+        ],
+        "TERMINACIONES": [
+            ("porcelanato",             "Porcelanato piso 60×60cm (inc. adhesivo + fragüe)"),
+            ("piso laminado",           "Piso laminado AC4 8mm (inc. fieltro amortiguador)"),
+            ("ceramica bano",           "Cerámica muro baño (inc. adhesivo + fragüe)"),
+            ("cielo yeso",              "Cielo falso yeso metal desplegado (inc. estuco)"),
+            ("pintura exterior",        "Pintura exterior impermeabilizante 2 manos"),
+        ],
+        "CARPINTERÍA": [
+            ("puerta interior",         "Puerta interior entamborada (inc. marco + cerradura)"),
+            ("puerta exterior",         "Puerta exterior maciza/metálica (inc. marco + chapa)"),
+            ("ventana aluminio",        "Ventana aluminio vidrio 6mm (inc. reja protectora)"),
+            ("mueble cocina",           "Mueble cocina alto+bajo MDF (inc. cubierta)"),
+        ],
+        "OBRAS EXTERIORES": [
+            ("pavimento exterior",      "Pavimento hormigón H-20 e=8cm exterior"),
+            ("cierre perimetral",       "Cierre perimetral muro bloque + reja h=1.8m"),
+            ("jardin",                  "Jardín pasto natural + tierra vegetal"),
+            ("aseo obra",               "Aseo final obra + retiro escombros + entrega"),
+        ],
+    }
+
+    pr = 4  # precio row
+    for cat, items in categorias.items():
+        # Category header
+        wp.merge_cells(f"A{pr}:D{pr}")
+        wp[f"A{pr}"] = cat
+        wp[f"A{pr}"].font = Font(name="Calibri", size=9, bold=True, color="FFFFFF")
+        wp[f"A{pr}"].fill = az2; wp[f"A{pr}"].alignment = Alignment(indent=1)
+        wp.row_dimensions[pr].height = 16
+        pr += 1
+        for clave, desc in items:
+            unidad, precio = PRECIOS_FIJOS.get(clave, ("?", 0))
+            row_fill = PatternFill("solid", fgColor="F2F2F2") if pr % 2 == 0 else None
+            for ci, val in enumerate([desc, unidad, precio, f"Clave: {clave}"], 1):
+                c = wp.cell(row=pr, column=ci, value=val)
+                c.font = Font(name="Calibri", size=9)
+                c.border = borde
+                if row_fill: c.fill = row_fill
+                if ci == 3:
+                    c.number_format = '#,##0'; c.alignment = Alignment(horizontal="right")
+                    c.font = Font(name="Calibri", size=9, bold=True)
+                if ci == 4:
+                    c.font = Font(name="Calibri", size=8, italic=True, color="666666")
+            wp.row_dimensions[pr].height = 14
+            pr += 1
+        pr += 1  # blank row between categories
+
+    # Footer note on pricing tab
+    wp.merge_cells(f"A{pr}:D{pr}")
+    wp[f"A{pr}"] = "Para actualizar precios: modifica la columna 'Precio Unit. (CLP)' en esta tabla y actualiza los valores correspondientes en la hoja Presupuesto."
+    wp[f"A{pr}"].font = Font(name="Calibri", size=8, italic=True, color="CC0000")
 
     buf = io.BytesIO()
     wb.save(buf)
@@ -460,7 +645,8 @@ def build_pdf(df: pd.DataFrame, resumen: dict, datos: dict, nombre_proyecto: str
                             rightMargin=1.8*cm, leftMargin=1.8*cm,
                             topMargin=1.5*cm, bottomMargin=1.5*cm)
     estilos = getSampleStyleSheet()
-    total = df["Total (CLP)"].sum()
+    subtotal_pdf = df["Total (CLP)"].sum()
+    total = subtotal_pdf * (1 + 0.10 + 0.08 + 0.05)
     uf_val = 38_500
     total_uf = total / uf_val
 
@@ -648,15 +834,20 @@ if st.button("⚡ Generar Presupuesto", disabled=not (archivo and nombre_proyect
         p3.markdown("⏳ **[3/4]** Calculando presupuesto...")
         df = calcular_totales(presupuesto)
         if uf_valor != 38_500:
-            df["Total (CLP)"] = df["Total (CLP)"] * uf_valor / 38_500
             df["P.U. (CLP)"] = df["P.U. (CLP)"] * uf_valor / 38_500
-        total = df["Total (CLP)"].sum()
+        df["Total (CLP)"] = df["Cantidad"] * df["P.U. (CLP)"]
+        subtotal = df["Total (CLP)"].sum()
+        total = subtotal * (1 + 0.10 + 0.08 + 0.05)
         total_uf = total / uf_valor
         n_items = len(presupuesto.get("partidas", []))
-        p3.markdown(f"✅ **[3/4]** {n_items} ítems generados · Total: **${total:,.0f} CLP** ({total_uf:,.0f} UF)")
+        sin_precio = int((df["P.U. (CLP)"] == 0).sum())
+        msg = f"✅ **[3/4]** {n_items} ítems · Total: **${total:,.0f} CLP** ({total_uf:,.0f} UF)"
+        if sin_precio > 0:
+            msg += f" · ⚠️ {sin_precio} ítems sin precio (clave no reconocida)"
+        p3.markdown(msg)
 
         p4.markdown("⏳ **[4/4]** Generando archivos...")
-        excel_bytes = build_excel(df, resumen, nombre_proyecto)
+        excel_bytes = build_excel(df, resumen, nombre_proyecto, int(uf_valor))
         pdf_bytes = build_pdf(df, resumen, datos, nombre_proyecto)
         p4.markdown("✅ **[4/4]** Archivos listos para descargar")
 
