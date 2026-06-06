@@ -108,34 +108,99 @@ Formato requerido:
 TEXTO DEL DOCUMENTO:
 """
 
+# Tabla de precios fijos CLP 2025 — Santa Cruz, VI Región (incluye flete +12%)
+# Claude SOLO estima cantidades. Los precios vienen de esta tabla, no del modelo.
+PRECIOS_FIJOS = {
+    # Obras preliminares
+    "instalación de faenas":        ("global",  2_800_000),
+    "trazado y nivelación":         ("m2",      4_500),
+    "excavación":                   ("m3",      22_000),
+    "retiro de escombros":          ("m3",      18_000),
+    "relleno compactado":           ("m3",      28_000),
+    # Fundaciones
+    "hormigón h-10 solado":         ("m3",      95_000),
+    "hormigón fundaciones h-25":    ("m3",      310_000),
+    "zapatas hormigón armado":      ("m3",      350_000),
+    "radier hormigón":              ("m2",      32_000),
+    "enfierradura fundaciones":     ("kg",      1_100),
+    # Estructura
+    "pilares hormigón armado":      ("m3",      580_000),
+    "vigas hormigón armado":        ("m3",      560_000),
+    "losa nervada aligerada":       ("m2",      165_000),
+    "losa maciza hormigón":         ("m2",      145_000),
+    "escalera hormigón armado":     ("global",  3_200_000),
+    "estructura metálica":          ("kg",      2_500),
+    # Albañilería
+    "muro bloque hormigón":         ("m2",      62_000),
+    "tabique volcanita":            ("m2",      42_000),
+    "estuco exterior":              ("m2",      19_000),
+    "estuco interior":              ("m2",      16_000),
+    # Cubierta
+    "impermeabilización losa":      ("m2",      28_000),
+    "formación pendientes":         ("m2",      15_000),
+    "cubierta panel sandwich":      ("m2",      42_000),
+    "cubierta teja":                ("m2",      32_000),
+    "canalón zinc":                 ("ml",      8_500),
+    "bajante pvc 110mm":            ("ml",      16_000),
+    # Instalaciones sanitarias
+    "agua potable punto":           ("punto",   165_000),
+    "alcantarillado punto":         ("punto",   130_000),
+    "artefacto sanitario":          ("un",      850_000),
+    "calefont gas":                 ("un",      680_000),
+    # Instalaciones eléctricas
+    "punto eléctrico":              ("punto",   82_000),
+    "tablero eléctrico":            ("un",      520_000),
+    "acometida eléctrica":          ("global",  1_100_000),
+    "red datos y tv":               ("punto",   48_000),
+    # Terminaciones
+    "porcelanato piso":             ("m2",      62_000),
+    "piso laminado":                ("m2",      38_000),
+    "cerámica muro baño":           ("m2",      52_000),
+    "pintura interior":             ("m2",      8_000),
+    "pintura exterior":             ("m2",      10_500),
+    "cielo falso yeso":             ("m2",      32_000),
+    # Carpintería
+    "puerta interior madera":       ("un",      280_000),
+    "puerta exterior":              ("un",      820_000),
+    "ventana aluminio":             ("m2",      145_000),
+    "mueble cocina":                ("ml",      420_000),
+    # Obras exteriores
+    "pavimento hormigón exterior":  ("m2",      38_000),
+    "cierre perimetral":            ("ml",      92_000),
+    "jardín y paisajismo":          ("m2",      18_000),
+    "aseo final de obra":           ("global",  1_100_000),
+}
+
 PROMPT_PARTIDAS = """Eres un estimador de costos de construcción para proyectos en Chile.
 
-Con base en el siguiente análisis técnico de un proyecto, genera un presupuesto por partidas.
+Con base en el análisis técnico, genera un presupuesto por partidas SOLO con cantidades.
+NO inventes precios — el sistema los asignará desde una tabla fija.
 
-Incluye máximo 8-10 partidas principales, con 3-6 ítems cada una (máximo 50 ítems en total).
+Incluye máximo 8-10 partidas principales, con 3-6 ítems cada una (máximo 50 ítems total).
 
 Para cada ítem:
-- partida: categoría principal
-- item: descripción concisa
-- unidad: m2, m3, kg, ml, un, global, punto
-- cantidad: número estimado
-- precio_unitario_clp: precio referencial CLP 2025
-- supuesto: true si la cantidad es estimada, false si es del documento
-- nota: máximo 10 palabras si necesario
-
-Usa precios de mercado chilenos 2025. Zona rural (Santa Cruz, VI Región): +12% en materiales.
+- partida: categoría (Obras Preliminares, Fundaciones, Estructura, Albañilería, Cubierta, Instalaciones, Terminaciones, Carpintería, Obras Exteriores)
+- item: descripción concisa del trabajo
+- precio_clave: la clave MÁS cercana de esta lista de precios disponibles:
+  instalación de faenas, trazado y nivelación, excavación, retiro de escombros, relleno compactado,
+  hormigón h-10 solado, hormigón fundaciones h-25, zapatas hormigón armado, radier hormigón, enfierradura fundaciones,
+  pilares hormigón armado, vigas hormigón armado, losa nervada aligerada, losa maciza hormigón, escalera hormigón armado, estructura metálica,
+  muro bloque hormigón, tabique volcanita, estuco exterior, estuco interior,
+  impermeabilización losa, formación pendientes, cubierta panel sandwich, cubierta teja, canalón zinc, bajante pvc 110mm,
+  agua potable punto, alcantarillado punto, artefacto sanitario, calefont gas,
+  punto eléctrico, tablero eléctrico, acometida eléctrica, red datos y tv,
+  porcelanato piso, piso laminado, cerámica muro baño, pintura interior, pintura exterior, cielo falso yeso,
+  puerta interior madera, puerta exterior, ventana aluminio, mueble cocina,
+  pavimento hormigón exterior, cierre perimetral, jardín y paisajismo, aseo final de obra
+- cantidad: número (usa datos del documento; si estimas, marca supuesto: true)
+- supuesto: true/false
+- nota: máximo 8 palabras si necesario
 
 Devuelve ÚNICAMENTE JSON:
 {
-  "resumen_proyecto": {
-    "nombre": "...",
-    "tipo": "...",
-    "superficie_m2": número,
-    "descripcion": "..."
-  },
+  "resumen_proyecto": {"nombre": "...", "tipo": "...", "superficie_m2": número, "descripcion": "..."},
   "partidas": [
-    {"partida": "...", "item": "...", "unidad": "...", "cantidad": número,
-     "precio_unitario_clp": número, "supuesto": false, "nota": "..."}
+    {"partida": "...", "item": "...", "precio_clave": "...", "cantidad": número, "supuesto": false, "nota": "..."}
   ]
 }
 
@@ -199,18 +264,20 @@ def parse_json_safe(raw: str) -> dict:
 def generar_presupuesto(texto: str, nombre_proyecto: str, api_key: str):
     client = anthropic.Anthropic(api_key=api_key)
 
-    # Paso 1: extraer datos técnicos
+    # Paso 1: extraer datos técnicos (temperature=0 → determinístico)
     r1 = client.messages.create(
         model="claude-sonnet-4-6",
         max_tokens=2048,
+        temperature=0,
         messages=[{"role": "user", "content": PROMPT_EXTRACCION + texto[:80_000]}]
     )
     datos = parse_json_safe(r1.content[0].text)
 
-    # Paso 2: generar partidas
+    # Paso 2: generar cantidades por partida (temperature=0 → determinístico)
     r2 = client.messages.create(
         model="claude-sonnet-4-6",
         max_tokens=16000,
+        temperature=0,
         messages=[{"role": "user", "content": PROMPT_PARTIDAS + json.dumps(datos, ensure_ascii=False)}]
     )
     presupuesto = parse_json_safe(r2.content[0].text)
@@ -219,14 +286,28 @@ def generar_presupuesto(texto: str, nombre_proyecto: str, api_key: str):
 
 
 def calcular_totales(presupuesto: dict) -> pd.DataFrame:
+    """Calcula totales usando la tabla de precios fijos — Claude solo aporta cantidades."""
     filas = []
     for p in presupuesto.get("partidas", []):
         cantidad = float(p.get("cantidad", 0) or 0)
-        pu = float(p.get("precio_unitario_clp", 0) or 0)
+        clave = (p.get("precio_clave") or "").lower().strip()
+
+        # Buscar precio en tabla fija
+        if clave in PRECIOS_FIJOS:
+            unidad, pu = PRECIOS_FIJOS[clave]
+        else:
+            # Fallback: buscar por coincidencia parcial
+            pu = 0
+            unidad = p.get("unidad", "")
+            for k, (u, v) in PRECIOS_FIJOS.items():
+                if any(word in clave for word in k.split() if len(word) > 4):
+                    pu, unidad = v, u
+                    break
+
         filas.append({
             "Partida": p.get("partida", ""),
             "Ítem": p.get("item", ""),
-            "Unidad": p.get("unidad", ""),
+            "Unidad": unidad,
             "Cantidad": cantidad,
             "P.U. (CLP)": pu,
             "Total (CLP)": cantidad * pu,
@@ -493,6 +574,10 @@ def build_pdf(df: pd.DataFrame, resumen: dict, datos: dict, nombre_proyecto: str
 
 # ── UI ────────────────────────────────────────────────────────────────────────
 
+# Session state — persiste resultados entre re-runs (evita reset al descargar)
+if "resultado" not in st.session_state:
+    st.session_state.resultado = None
+
 st.markdown("## 🏗️ Generador de Presupuesto de Construcción")
 st.markdown(
     "Sube la memoria de cálculo o especificaciones técnicas del proyecto. "
@@ -500,7 +585,7 @@ st.markdown(
 )
 st.divider()
 
-# API key desde secrets o input manual (para desarrollo local)
+# API key desde secrets
 api_key = st.secrets.get("ANTHROPIC_API_KEY", "") if hasattr(st, "secrets") else ""
 
 col1, col2 = st.columns([2, 1])
@@ -521,7 +606,6 @@ archivo = st.file_uploader(
 )
 
 if archivo:
-    ext = Path(archivo.name).suffix.lower()
     st.caption(f"📄 {archivo.name}  ({archivo.size/1024:.0f} KB)")
 
 st.divider()
@@ -532,10 +616,12 @@ if st.button("⚡ Generar Presupuesto", disabled=not (archivo and nombre_proyect
         st.error("No se encontró la API key de Anthropic. Configura ANTHROPIC_API_KEY en los secrets de la app.")
         st.stop()
 
+    # Limpiar resultado anterior
+    st.session_state.resultado = None
+
     data = archivo.read()
     ext = Path(archivo.name).suffix.lower()
 
-    # Contenedor de progreso
     progreso = st.container()
     with progreso:
         st.markdown("**Procesando...**")
@@ -545,7 +631,6 @@ if st.button("⚡ Generar Presupuesto", disabled=not (archivo and nombre_proyect
         p4 = st.empty()
 
     try:
-        # 1. Extraer texto
         p1.markdown("⏳ **[1/4]** Leyendo documento...")
         if ext == ".pdf":
             texto = extraer_texto_pdf(data)
@@ -555,62 +640,80 @@ if st.button("⚡ Generar Presupuesto", disabled=not (archivo and nombre_proyect
             texto = extraer_texto_docx(data)
         p1.markdown(f"✅ **[1/4]** Documento leído — {len(texto):,} caracteres extraídos")
 
-        # 2. Análisis IA
         p2.markdown("⏳ **[2/4]** Analizando especificaciones técnicas con IA...")
         datos, presupuesto = generar_presupuesto(texto, nombre_proyecto, api_key)
         resumen = presupuesto.get("resumen_proyecto", {})
         p2.markdown(f"✅ **[2/4]** Proyecto identificado: {resumen.get('tipo','N/D')} · {resumen.get('superficie_m2','N/D')} m²")
 
-        # 3. Calcular totales
         p3.markdown("⏳ **[3/4]** Calculando presupuesto...")
         df = calcular_totales(presupuesto)
-        df["Total (CLP)"] = df["Total (CLP)"].apply(lambda x: x * uf_valor / 38_500 if uf_valor != 38_500 else x)
+        if uf_valor != 38_500:
+            df["Total (CLP)"] = df["Total (CLP)"] * uf_valor / 38_500
+            df["P.U. (CLP)"] = df["P.U. (CLP)"] * uf_valor / 38_500
         total = df["Total (CLP)"].sum()
         total_uf = total / uf_valor
         n_items = len(presupuesto.get("partidas", []))
         p3.markdown(f"✅ **[3/4]** {n_items} ítems generados · Total: **${total:,.0f} CLP** ({total_uf:,.0f} UF)")
 
-        # 4. Generar archivos
         p4.markdown("⏳ **[4/4]** Generando archivos...")
         excel_bytes = build_excel(df, resumen, nombre_proyecto)
         pdf_bytes = build_pdf(df, resumen, datos, nombre_proyecto)
         p4.markdown("✅ **[4/4]** Archivos listos para descargar")
 
-        # Resultados
-        st.divider()
-        st.success(f"**Presupuesto generado correctamente**")
-
-        st.markdown(f"""
-        <div class="result-box">
-            <b>Proyecto:</b> {resumen.get('tipo','N/D')}<br>
-            <b>Superficie:</b> {resumen.get('superficie_m2','N/D')} m²<br>
-            <b>Ítems presupuestados:</b> {n_items}<br>
-            <b>Total estimado:</b> ${total:,.0f} CLP &nbsp;·&nbsp; {total_uf:,.0f} UF
-        </div>
-        """, unsafe_allow_html=True)
-
+        # Guardar en session_state — sobrevive re-runs por clicks de descarga
         nombre_slug = nombre_proyecto.lower().replace(" ", "_").replace("/", "-")[:40]
-        dc1, dc2 = st.columns(2)
-        with dc1:
-            st.download_button(
-                label="📥 Descargar Excel (presupuesto detallado)",
-                data=excel_bytes,
-                file_name=f"presupuesto_{nombre_slug}.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                use_container_width=True,
-            )
-        with dc2:
-            st.download_button(
-                label="📥 Descargar PDF (resumen ejecutivo)",
-                data=pdf_bytes,
-                file_name=f"resumen_{nombre_slug}.pdf",
-                mime="application/pdf",
-                use_container_width=True,
-            )
+        st.session_state.resultado = {
+            "df": df, "resumen": resumen, "datos": datos,
+            "excel_bytes": excel_bytes, "pdf_bytes": pdf_bytes,
+            "total": total, "total_uf": total_uf, "n_items": n_items,
+            "nombre_slug": nombre_slug, "uf_valor": uf_valor,
+        }
 
-        # Vista previa del resumen por partidas
-        with st.expander("Ver resumen por partidas"):
-            res = df.groupby("Partida")["Total (CLP)"].sum().reset_index()
+    except Exception as e:
+        st.error(f"Error al procesar el documento: {e}")
+        st.exception(e)
+
+# ── Mostrar resultados desde session_state (persiste sin re-generar) ──────────
+if st.session_state.resultado:
+    r = st.session_state.resultado
+    df, resumen, datos = r["df"], r["resumen"], r["datos"]
+    total, total_uf = r["total"], r["total_uf"]
+    n_items, nombre_slug = r["n_items"], r["nombre_slug"]
+    excel_bytes, pdf_bytes = r["excel_bytes"], r["pdf_bytes"]
+
+    st.divider()
+    st.success("**Presupuesto generado correctamente**")
+
+    st.markdown(f"""
+    <div class="result-box">
+        <b>Proyecto:</b> {resumen.get('tipo','N/D')}<br>
+        <b>Superficie:</b> {resumen.get('superficie_m2','N/D')} m²<br>
+        <b>Ítems presupuestados:</b> {n_items}<br>
+        <b>Total estimado:</b> ${total:,.0f} CLP &nbsp;·&nbsp; {total_uf:,.0f} UF
+    </div>
+    """, unsafe_allow_html=True)
+
+    dc1, dc2 = st.columns(2)
+    with dc1:
+        st.download_button(
+            label="📥 Descargar Excel (presupuesto detallado)",
+            data=excel_bytes,
+            file_name=f"presupuesto_{nombre_slug}.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            use_container_width=True,
+        )
+    with dc2:
+        st.download_button(
+            label="📥 Descargar PDF (resumen ejecutivo)",
+            data=pdf_bytes,
+            file_name=f"resumen_{nombre_slug}.pdf",
+            mime="application/pdf",
+            use_container_width=True,
+        )
+
+    # Vista previa del resumen por partidas
+    with st.expander("Ver resumen por partidas"):
+        res = df.groupby("Partida")["Total (CLP)"].sum().reset_index()
             res = res.sort_values("Total (CLP)", ascending=False)
             res["% del Total"] = (res["Total (CLP)"] / total * 100).round(1).astype(str) + "%"
             res["Total (CLP)"] = res["Total (CLP)"].apply(lambda x: f"${x:,.0f}")
