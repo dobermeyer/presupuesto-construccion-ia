@@ -714,14 +714,10 @@ if st.session_state.resultado:
     # Vista previa del resumen por partidas
     with st.expander("Ver resumen por partidas"):
         res = df.groupby("Partida")["Total (CLP)"].sum().reset_index()
-            res = res.sort_values("Total (CLP)", ascending=False)
-            res["% del Total"] = (res["Total (CLP)"] / total * 100).round(1).astype(str) + "%"
-            res["Total (CLP)"] = res["Total (CLP)"].apply(lambda x: f"${x:,.0f}")
-            st.dataframe(res, hide_index=True, use_container_width=True)
-
-    except Exception as e:
-        st.error(f"Error al procesar el documento: {e}")
-        st.exception(e)
+        res = res.sort_values("Total (CLP)", ascending=False)
+        res["% del Total"] = (res["Total (CLP)"] / total * 100).round(1).astype(str) + "%"
+        res["Total (CLP)"] = res["Total (CLP)"].apply(lambda x: f"${x:,.0f}")
+        st.dataframe(res, hide_index=True, use_container_width=True)
 
 # Footer
 st.divider()
