@@ -238,25 +238,54 @@ def extraer_texto_pdf(data: bytes) -> str:
 
 
 def extraer_texto_doc(data: bytes) -> str:
-    with tempfile.NamedTemporaryFile(suffix='.doc', delete=False) as f:
-        f.write(data)
-        tmp_path = f.name
-    ole = olefile.OleFileIO(tmp_path)
-    streams = []
-    for name in ['WordDocument', '1Table', '0Table']:
+    """Extrae texto de archivos .doc binarios (Word 97-2003).
+    Estrategia 1: olefile streams (funciona bien para docs con texto Unicode).
+    Estrategia 2: escaneo directo de bytes (fallback para docs con texto Latin/UTF-8 incrustado).
+    """
+    # ── Estrategia 1: olefile ────────────────────────────────────────────────
+    try:
+        with tempfile.NamedTemporaryFile(suffix='.doc', delete=False) as f:
+            f.write(data)
+            tmp_path = f.name
         try:
-            streams.append(ole.openstream(name).read())
-        except Exception:
-            pass
-    combined = b''.join(streams)
-    decoded = combined.decode('utf-16-le', errors='ignore')
-    lines = decoded.split('\r')
+            ole = olefile.OleFileIO(tmp_path)
+            streams = []
+            for name in ['WordDocument', '1Table', '0Table']:
+                try:
+                    streams.append(ole.openstream(name).read())
+                except Exception:
+                    pass
+            combined = b''.join(streams)
+            decoded = combined.decode('utf-16-le', errors='ignore')
+            lines = decoded.split('\r')
+            good_lines = []
+            for line in lines:
+                clean = re.sub(r'[^\x20-\x7E\xC0-\xFF\n\t]', '', line).strip()
+                if len(clean) > 20:
+                    good_lines.append(clean)
+        finally:
+            try:
+                import os; os.unlink(tmp_path)
+            except Exception:
+                pass
+        if len(good_lines) >= 10:
+            return '\n'.join(good_lines)
+    except Exception:
+        pass
+
+    # ── Estrategia 2: escaneo de bytes (para docs Latin/cp1252) ─────────────
+    chunks = re.findall(rb'[ -~\xc0-\xff\x80-\xbf]{30,}', data)
     good_lines = []
-    for line in lines:
-        clean = re.sub(r'[^\x20-\x7E\xC0-\xFF\n\t]', '', line).strip()
-        if len(clean) > 20:
-            good_lines.append(clean)
-    import os; os.unlink(tmp_path)
+    for chunk in chunks:
+        for enc in ('utf-8', 'cp1252', 'latin-1'):
+            try:
+                s = chunk.decode(enc, errors='strict').strip()
+                # Filtrar: debe tener al menos 20 letras reales y no ser puro binario
+                if len(s) > 25 and sum(1 for c in s if c.isalpha()) > 15 and not all(c == 'ÿ' or c == '\x00' for c in s):
+                    good_lines.append(s)
+                break
+            except Exception:
+                continue
     return '\n'.join(good_lines)
 
 
