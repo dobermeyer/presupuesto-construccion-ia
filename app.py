@@ -375,7 +375,10 @@ def calcular_totales(presupuesto: dict) -> pd.DataFrame:
             "Supuesto": "(*)" if p.get("supuesto") or pu == 0 else "",
             "Nota": "" if pu > 0 else "SIN PRECIO — revisar clave",
         })
-    df = pd.DataFrame(filas)
+    cols = ["Partida", "Ítem", "Clave", "Unidad", "Cantidad", "P.U. (CLP)", "Total (CLP)", "Supuesto", "Nota"]
+    if not filas:
+        return pd.DataFrame(columns=cols)
+    df = pd.DataFrame(filas, columns=cols)
     return df
 
 
@@ -878,6 +881,9 @@ if st.button("⚡ Generar Presupuesto", disabled=not (archivo and nombre_proyect
 
         p3.markdown("⏳ **[3/4]** Calculando presupuesto...")
         df = calcular_totales(presupuesto)
+        if df.empty:
+            st.error("No se generaron partidas de presupuesto. El documento puede ser demasiado corto o no contener especificaciones constructivas. Intenta con un documento más detallado.")
+            st.stop()
         if uf_valor != 38_500:
             df["P.U. (CLP)"] = df["P.U. (CLP)"] * uf_valor / 38_500
         df["Total (CLP)"] = df["Cantidad"] * df["P.U. (CLP)"]
