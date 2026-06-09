@@ -269,14 +269,30 @@ def extraer_texto_docx(data: bytes) -> str:
 def parse_json_safe(raw: str) -> dict:
     raw = re.sub(r'^```json\s*', '', raw.strip(), flags=re.MULTILINE)
     raw = re.sub(r'\s*```\s*$', '', raw)
+    # Strip trailing commas before closing brackets (common truncation artifact)
+    raw = re.sub(r',\s*([}\]])', r'\1', raw)
     try:
         return json.loads(raw)
     except json.JSONDecodeError:
-        for suffix in [']}', ']}]}', ']}]}]}']:
+        # Try standard structural suffixes first
+        for suffix in ['"}', '"]}', ']}', ']}]}', ']}]}]}']:
             try:
                 return json.loads(raw + suffix)
             except Exception:
                 pass
+        # Last resort: truncate to last complete key-value pair and close the object
+        # Find last comma at top level and try closing from there
+        try:
+            last_comma = raw.rfind('",')
+            if last_comma > 0:
+                trimmed = raw[:last_comma + 1].rstrip(',')
+                for suffix in ['"}', '"}]}', '}']:
+                    try:
+                        return json.loads(trimmed + suffix)
+                    except Exception:
+                        pass
+        except Exception:
+            pass
         raise
 
 
@@ -286,7 +302,7 @@ def generar_presupuesto(texto: str, nombre_proyecto: str, api_key: str):
     # Paso 1: extraer datos técnicos (temperature=0 → determinístico)
     r1 = client.messages.create(
         model="claude-sonnet-4-6",
-        max_tokens=2048,
+        max_tokens=4096,
         temperature=0,
         messages=[{"role": "user", "content": PROMPT_EXTRACCION + texto[:80_000]}]
     )
