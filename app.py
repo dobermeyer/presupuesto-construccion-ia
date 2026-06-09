@@ -208,14 +208,22 @@ porcelanato | piso laminado | ceramica bano | cielo yeso | pintura exterior
 puerta interior | puerta exterior | ventana aluminio | mueble cocina
 pavimento exterior | cierre perimetral | jardin | aseo obra
 
+REGLAS CRÍTICAS para cantidades:
+- Las claves "instalacion faenas", "escalera hormigon", "acometida electrica" y "aseo obra" son ítems GLOBALES: cantidad SIEMPRE = 1, independiente del tamaño del proyecto.
+- Para ítems en m2: usa la superficie real del área correspondiente, no la superficie total del proyecto.
+- Para ítems en m3: calcula volumen real (largo × ancho × alto o sección × longitud).
+- Para ítems en "punto" o "un": cuenta unidades reales del proyecto.
+- Para ítems en ml: usa la longitud real en metros.
+- Si no tienes el dato exacto, estima con criterio (supuesto: true).
+
 Campos por ítem:
 - partida: Obras Preliminares | Fundaciones | Estructura | Albañilería | Cubierta | Instalaciones Sanitarias | Instalaciones Eléctricas | Terminaciones | Carpintería | Obras Exteriores
 - item: descripción breve del trabajo
-- precio_clave: UNA clave exacta de la lista anterior
-- cantidad: número (si estimas, supuesto: true)
+- precio_clave: UNA clave exacta de la lista anterior (copia textual, sin tildes ni variaciones)
+- cantidad: número según las reglas anteriores
 - supuesto: true/false
 
-Devuelve ÚNICAMENTE JSON:
+Devuelve ÚNICAMENTE JSON válido:
 {
   "resumen_proyecto": {"nombre": "...", "tipo": "...", "superficie_m2": número, "descripcion": "..."},
   "partidas": [
@@ -406,6 +414,11 @@ def calcular_totales(presupuesto: dict) -> pd.DataFrame:
             # Clave no reconocida: precio 0, marcado para revisión
             unidad = "?"
             pu = 0
+
+        # Ítems globales: cantidad siempre = 1 independiente de lo que envió la IA
+        CLAVES_GLOBALES = {"instalacion faenas", "escalera hormigon", "acometida electrica", "aseo obra"}
+        if clave in CLAVES_GLOBALES:
+            cantidad = 1.0
 
         filas.append({
             "Partida": p.get("partida", ""),
@@ -934,8 +947,9 @@ if st.button("⚡ Generar Presupuesto", disabled=not (archivo and nombre_proyect
         df = calcular_totales(presupuesto)
         if df.empty:
             with st.expander("⚠️ Debug — respuesta IA (partidas vacías)", expanded=True):
+                st.write("**Respuesta Call 2 (partidas):**")
                 st.json(presupuesto)
-                st.write("**Datos extraídos (Call 1):**")
+                st.write("**Datos extraídos Call 1:**")
                 st.json(datos)
             st.error("No se generaron partidas de presupuesto. Revisa el debug arriba para ver qué devolvió la IA.")
             st.stop()
@@ -951,6 +965,11 @@ if st.button("⚡ Generar Presupuesto", disabled=not (archivo and nombre_proyect
         if sin_precio > 0:
             msg += f" · ⚠️ {sin_precio} ítems sin precio (clave no reconocida)"
         p3.markdown(msg)
+        if sin_precio > n_items * 0.3:
+            with st.expander(f"⚠️ {sin_precio} ítems sin precio — claves generadas por la IA", expanded=True):
+                unmatched = df[df["P.U. (CLP)"] == 0][["Partida","Ítem","Clave"]]
+                st.dataframe(unmatched, use_container_width=True)
+                st.caption("Estas claves no coincidieron exactamente con la tabla de precios. El Excel mostrará $0 en esas filas.")
 
         p4.markdown("⏳ **[4/4]** Generando archivos...")
         excel_bytes = build_excel(df, resumen, nombre_proyecto, int(uf_valor))
