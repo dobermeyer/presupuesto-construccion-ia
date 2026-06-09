@@ -271,21 +271,50 @@ def parse_json_safe(raw: str) -> dict:
     raw = re.sub(r'\s*```\s*$', '', raw)
     # Strip trailing commas before closing brackets (common truncation artifact)
     raw = re.sub(r',\s*([}\]])', r'\1', raw)
+
+    # Extract only the first complete JSON object — ignores any trailing text/explanation
+    def extract_first_json(s: str) -> str:
+        start = s.find('{')
+        if start == -1:
+            return s
+        depth = 0
+        in_str = False
+        escape = False
+        for i, ch in enumerate(s[start:], start):
+            if escape:
+                escape = False
+                continue
+            if ch == '\\' and in_str:
+                escape = True
+                continue
+            if ch == '"':
+                in_str = not in_str
+                continue
+            if not in_str:
+                if ch == '{':
+                    depth += 1
+                elif ch == '}':
+                    depth -= 1
+                    if depth == 0:
+                        return s[start:i + 1]
+        return s[start:]  # truncated — return what we have
+
+    candidate = extract_first_json(raw)
+
     try:
-        return json.loads(raw)
+        return json.loads(candidate)
     except json.JSONDecodeError:
-        # Try standard structural suffixes first
+        # Try standard structural suffixes for truncated JSON
         for suffix in ['"}', '"]}', ']}', ']}]}', ']}]}]}']:
             try:
-                return json.loads(raw + suffix)
+                return json.loads(candidate + suffix)
             except Exception:
                 pass
-        # Last resort: truncate to last complete key-value pair and close the object
-        # Find last comma at top level and try closing from there
+        # Last resort: trim to last complete key-value pair
         try:
-            last_comma = raw.rfind('",')
+            last_comma = candidate.rfind('",')
             if last_comma > 0:
-                trimmed = raw[:last_comma + 1].rstrip(',')
+                trimmed = candidate[:last_comma + 1].rstrip(',')
                 for suffix in ['"}', '"}]}', '}']:
                     try:
                         return json.loads(trimmed + suffix)
