@@ -268,8 +268,11 @@ def extraer_texto_doc(data: bytes) -> str:
                 import os; os.unlink(tmp_path)
             except Exception:
                 pass
-        if len(good_lines) >= 10:
-            return '\n'.join(good_lines)
+        result = '\n'.join(good_lines)
+        # Solo usar este resultado si hay contenido real: al menos 500 chars de letras reales
+        alpha_count = sum(1 for c in result if c.isalpha() and ord(c) < 500)
+        if alpha_count >= 500:
+            return result
     except Exception:
         pass
 
