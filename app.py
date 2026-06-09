@@ -902,6 +902,11 @@ if st.button("⚡ Generar Presupuesto", disabled=not (archivo and nombre_proyect
         else:
             texto = extraer_texto_docx(data)
         p1.markdown(f"✅ **[1/4]** Documento leído — {len(texto):,} caracteres extraídos")
+        if len(texto) < 200:
+            with st.expander("⚠️ Debug — texto extraído (muy corto)", expanded=True):
+                st.code(texto[:2000] or "(vacío)")
+            st.error("Se extrajeron muy pocos caracteres del documento. Puede ser un archivo escaneado (imagen) o un formato no compatible.")
+            st.stop()
 
         p2.markdown("⏳ **[2/4]** Analizando especificaciones técnicas con IA...")
         datos, presupuesto = generar_presupuesto(texto, nombre_proyecto, api_key)
@@ -911,7 +916,11 @@ if st.button("⚡ Generar Presupuesto", disabled=not (archivo and nombre_proyect
         p3.markdown("⏳ **[3/4]** Calculando presupuesto...")
         df = calcular_totales(presupuesto)
         if df.empty:
-            st.error("No se generaron partidas de presupuesto. El documento puede ser demasiado corto o no contener especificaciones constructivas. Intenta con un documento más detallado.")
+            with st.expander("⚠️ Debug — respuesta IA (partidas vacías)", expanded=True):
+                st.json(presupuesto)
+                st.write("**Datos extraídos (Call 1):**")
+                st.json(datos)
+            st.error("No se generaron partidas de presupuesto. Revisa el debug arriba para ver qué devolvió la IA.")
             st.stop()
         if uf_valor != 38_500:
             df["P.U. (CLP)"] = df["P.U. (CLP)"] * uf_valor / 38_500
