@@ -237,59 +237,70 @@ def extraer_texto_pdf(data: bytes) -> str:
     return "\n\n".join(texto_total)
 
 
-def extraer_texto_doc(data: bytes) -> str:
-    """Extrae texto de archivos .doc binarios (Word 97-2003).
-    Estrategia 1: olefile streams (funciona bien para docs con texto Unicode).
-    Estrategia 2: escaneo directo de bytes (fallback para docs con texto Latin/UTF-8 incrustado).
-    """
-    # ── Estrategia 1: olefile ────────────────────────────────────────────────
+def _alpha_score(text: str) -> int:
+    """Cuenta letras latinas reales — excluye CJK y símbolos."""
+    return sum(1 for c in text if c.isalpha() and ord(c) < 600)
+
+def _olefile_extract(data: bytes) -> str:
+    with tempfile.NamedTemporaryFile(suffix='.doc', delete=False) as f:
+        f.write(data)
+        tmp_path = f.name
     try:
-        with tempfile.NamedTemporaryFile(suffix='.doc', delete=False) as f:
-            f.write(data)
-            tmp_path = f.name
-        try:
-            ole = olefile.OleFileIO(tmp_path)
-            streams = []
-            for name in ['WordDocument', '1Table', '0Table']:
-                try:
-                    streams.append(ole.openstream(name).read())
-                except Exception:
-                    pass
-            combined = b''.join(streams)
-            decoded = combined.decode('utf-16-le', errors='ignore')
-            lines = decoded.split('\r')
-            good_lines = []
-            for line in lines:
-                clean = re.sub(r'[^\x20-\x7E\xC0-\xFF\n\t]', '', line).strip()
-                if len(clean) > 20:
-                    good_lines.append(clean)
-        finally:
+        ole = olefile.OleFileIO(tmp_path)
+        streams = []
+        for name in ['WordDocument', '1Table', '0Table']:
             try:
-                import os; os.unlink(tmp_path)
+                streams.append(ole.openstream(name).read())
             except Exception:
                 pass
-        result = '\n'.join(good_lines)
-        # Solo usar este resultado si hay contenido real: al menos 500 chars de letras reales
-        alpha_count = sum(1 for c in result if c.isalpha() and ord(c) < 500)
-        if alpha_count >= 500:
-            return result
-    except Exception:
-        pass
+        combined = b''.join(streams)
+        decoded = combined.decode('utf-16-le', errors='ignore')
+        lines = decoded.split('\r')
+        good_lines = [
+            re.sub(r'[^\x20-\x7E\xC0-\xFF\n\t]', '', ln).strip()
+            for ln in lines
+        ]
+        return '\n'.join(ln for ln in good_lines if len(ln) > 20)
+    finally:
+        try:
+            import os; os.unlink(tmp_path)
+        except Exception:
+            pass
 
-    # ── Estrategia 2: escaneo de bytes (para docs Latin/cp1252) ─────────────
+def _bytescan_extract(data: bytes) -> str:
     chunks = re.findall(rb'[ -~\xc0-\xff\x80-\xbf]{30,}', data)
     good_lines = []
     for chunk in chunks:
         for enc in ('utf-8', 'cp1252', 'latin-1'):
             try:
                 s = chunk.decode(enc, errors='strict').strip()
-                # Filtrar: debe tener al menos 20 letras reales y no ser puro binario
-                if len(s) > 25 and sum(1 for c in s if c.isalpha()) > 15 and not all(c == 'ÿ' or c == '\x00' for c in s):
+                if (len(s) > 25
+                        and sum(1 for c in s if c.isalpha()) > 15
+                        and not all(c in ('ÿ', '\x00') for c in s)):
                     good_lines.append(s)
                 break
             except Exception:
                 continue
     return '\n'.join(good_lines)
+
+def extraer_texto_doc(data: bytes) -> str:
+    """Extrae texto de .doc (Word 97-2003). Corre ambas estrategias y devuelve
+    la que tenga más letras latinas reales — así funciona con docs Unicode y
+    con docs Latin/cp1252 indistintamente."""
+    result_ole = ""
+    result_scan = ""
+    try:
+        result_ole = _olefile_extract(data)
+    except Exception:
+        pass
+    try:
+        result_scan = _bytescan_extract(data)
+    except Exception:
+        pass
+    # Devolver el resultado con más contenido real
+    if _alpha_score(result_scan) >= _alpha_score(result_ole):
+        return result_scan
+    return result_ole
 
 
 def extraer_texto_docx(data: bytes) -> str:
