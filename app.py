@@ -904,8 +904,11 @@ if st.button("⚡ Generar Presupuesto", disabled=not (archivo and nombre_proyect
             texto = extraer_texto_doc(data)
         else:
             texto = extraer_texto_docx(data)
-        p1.markdown(f"✅ **[1/4]** Documento leído — {len(texto):,} caracteres extraídos")
-        if len(texto) < 200:
+        alpha_count = sum(1 for c in texto if c.isalpha() and ord(c) < 500)
+        p1.markdown(f"✅ **[1/4]** Documento leído — {len(texto):,} chars · {alpha_count:,} letras reales")
+        with st.expander("🔍 Debug — texto extraído del documento", expanded=False):
+            st.code(texto[:3000] or "(vacío)")
+        if len(texto) < 200 or alpha_count < 300:
             with st.expander("⚠️ Debug — texto extraído (muy corto)", expanded=True):
                 st.code(texto[:2000] or "(vacío)")
             st.error("Se extrajeron muy pocos caracteres del documento. Puede ser un archivo escaneado (imagen) o un formato no compatible.")
